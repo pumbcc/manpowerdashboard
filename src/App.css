@@ -380,7 +380,7 @@ td {
   color: rgba(255,255,255,.85);
   border-bottom: 1px solid rgba(255,255,255,.05);
   vertical-align: middle;
-  white-space: nowrap;
+   white-space: normal;
 }
 
 tbody tr:last-child td { border-bottom: 0; }
@@ -692,4 +692,468 @@ tbody tr:nth-child(even):hover td { background: rgba(255,255,255,.045); }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ================================================================
+   FIX: Center layout + prevent horizontal overflow + mobile fit
+   ================================================================ */
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+}
+
+.page {
+  width: 100%;
+  max-width: 1520px;
+  margin-left: auto;
+  margin-right: auto;
+  overflow-x: hidden;
+}
+
+/* สำคัญมาก: บังคับ grid/card ยอมหด ไม่ดันออกขวา */
+.page *,
+.card,
+.kpi-grid,
+.grid-one,
+.grid-two,
+.filters,
+.exec-summary-grid,
+.exec-split-grid,
+.store-exec-card,
+.exec-panel,
+.table-wrap {
+  min-width: 0;
+}
+
+/* กัน table ดัน layout หลักออกขวา */
+.table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ให้ข้อความใน table ยาวได้เฉพาะบาง cell ไม่ทำให้ทั้งหน้าแตก */
+td,
+th {
+  max-width: 260px;
+}
+
+td:first-child,
+th:first-child {
+  max-width: 340px;
+}
+
+/* Header ไม่ให้ปุ่ม refresh ดันออกขวา */
+.header {
+  width: 100%;
+}
+
+/* Fix select/input overflow บน mobile */
+input,
+select,
+button {
+  max-width: 100%;
+}
+
+/* ================================================================
+   Better responsive behavior
+   ================================================================ */
+
+@media (max-width: 1280px) {
+  .page {
+    max-width: 100%;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .exec-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 960px) {
+  .page {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .grid-two,
+  .exec-split-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .store-exec-title,
+  .store-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 14px 12px 44px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .refresh-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  h1 {
+    font-size: 28px;
+    line-height: 1.08;
+  }
+
+  .header > div > p,
+  p {
+    font-size: 13px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .kpi-card {
+    min-height: 96px;
+    padding: 14px 14px;
+  }
+
+  .kpi-label {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+  }
+
+  .kpi-value {
+    font-size: 22px;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .search-box,
+  select {
+    border-radius: 14px;
+  }
+
+  .exec-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .exec-panel,
+  .exec-metric {
+    padding: 14px;
+  }
+
+  .mix-row {
+    font-size: 12.5px;
+  }
+
+  .diagnosis-head {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  td,
+  th {
+    padding: 9px 10px;
+    font-size: 12px;
+    max-width: 220px;
+  }
+
+  .subtext {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  .page {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .kpi-value {
+    font-size: 24px;
+  }
+
+  .exec-value {
+    font-size: 22px;
+  }
+}
+
+.search-area {
+  position: relative;
+  min-width: 0;
+}
+
+.store-suggestion-box {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(8, 12, 20, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.suggestion-title {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 8px 10px 10px;
+}
+
+.store-suggestion-item {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.14s ease;
+}
+
+.store-suggestion-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.store-suggestion-item span:first-child {
+  min-width: 0;
+}
+
+.store-suggestion-item b {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.store-suggestion-item small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.store-suggestion-item > span:last-child {
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .store-suggestion-box {
+    position: static;
+    margin-top: 8px;
+    max-height: 280px;
+  }
+
+  .store-suggestion-item {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+/* Dropdown search suggestion: align left + cleaner layout */
+.store-suggestion-box {
+  text-align: left;
+}
+
+.suggestion-title {
+  text-align: left;
+}
+
+.store-suggestion-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  text-align: left;
+  width: 100%;
+}
+
+.store-suggestion-item span:first-child {
+  text-align: left;
+  min-width: 0;
+}
+
+.store-suggestion-item b {
+  text-align: left;
+}
+
+.store-suggestion-item small {
+  text-align: left;
+}
+
+.store-suggestion-item > span:last-child {
+  justify-self: end;
+  text-align: right;
+  margin-top: 1px;
+}
+
+/* Fix search dropdown floating above other blocks */
+.search-area {
+  position: relative;
+  z-index: 200;
+  min-width: 0;
+}
+
+.filters {
+  position: relative;
+  z-index: 150;
+  overflow: visible;
+}
+
+.store-suggestion-box {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 9999;
+
+  display: block;
+  text-align: left;
+
+  background: rgba(8, 12, 20, 0.96);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+
+  max-height: 360px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.store-suggestion-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 4px;
+
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.store-suggestion-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.store-suggestion-item span,
+.store-suggestion-item b,
+.store-suggestion-item small {
+  text-align: left;
+}
+
+.store-suggestion-item span:first-child {
+  width: 100%;
+  min-width: 0;
+}
+
+.store-suggestion-item b {
+  display: block;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.store-suggestion-item small {
+  display: block;
+  width: 100%;
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-top: 2px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.store-suggestion-item > span:last-child {
+  align-self: flex-start;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .store-suggestion-box {
+    position: absolute;
+    max-height: 300px;
+  }
 }

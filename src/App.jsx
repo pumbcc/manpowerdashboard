@@ -24,6 +24,7 @@ const [loading, setLoading] = useState(true);
 const [error, setError] = useState("");
 
   const [search, setSearch] = useState("");
+  const [selectedStoreCode, setSelectedStoreCode] = useState("");
   const [brand, setBrand] = useState("All");
   const [region, setRegion] = useState("All");
   const [storeModel, setStoreModel] = useState("All");
@@ -128,6 +129,8 @@ setLoading(false);
     });
   }, [rows, search, brand, region, storeModel]);
 
+ 
+
   const storeSummary = useMemo(() => {
     const map = new Map();
 
@@ -159,6 +162,26 @@ setLoading(false);
       coverage: s.plan > 0 ? (s.existing / s.plan) * 100 : 0,
     }));
   }, [filteredRows]);
+
+
+
+const storeSuggestions = useMemo(() => {
+  const keyword = search.trim().toLowerCase();
+
+  if (!keyword) return [];
+
+  return storeSummary
+    .filter((s) => {
+      return (
+        String(s.cost_center_code || "").toLowerCase().includes(keyword) ||
+        String(s.store_name_th || "").toLowerCase().includes(keyword)
+      );
+    })
+    .sort((a, b) =>
+      String(a.store_name_th || "").localeCompare(String(b.store_name_th || ""))
+    )
+    .slice(0, 20);
+}, [search, storeSummary]);
 
   const kpi = useMemo(() => {
     const plan = filteredRows.reduce(
@@ -241,27 +264,33 @@ setLoading(false);
 const selectedStoreDetail = useMemo(() => {
   const keyword = search.trim().toLowerCase();
 
-  if (!keyword) return [];
+  if (!keyword && !selectedStoreCode) return [];
 
-  const matchedStores = storeSummary.filter((s) => {
-    return (
-      String(s.cost_center_code || "").toLowerCase().includes(keyword) ||
-      String(s.store_name_th || "").toLowerCase().includes(keyword)
-    );
-  });
+  let selectedCostCenter = "";
 
-  if (matchedStores.length !== 1) return [];
+  if (selectedStoreCode) {
+    selectedCostCenter = String(selectedStoreCode).trim();
+  } else {
+    const matchedStores = storeSummary.filter((s) => {
+      return (
+        String(s.cost_center_code || "").toLowerCase().includes(keyword) ||
+        String(s.store_name_th || "").toLowerCase().includes(keyword)
+      );
+    });
 
-const selectedCostCenter = String(matchedStores[0].cost_center_code || "").trim();
+    if (matchedStores.length !== 1) return [];
 
-return filteredRows
-  .filter((r) => String(r.cost_center_code || "").trim() === selectedCostCenter)
+    selectedCostCenter = String(matchedStores[0].cost_center_code || "").trim();
+  }
+
+  return filteredRows
+    .filter((r) => String(r.cost_center_code || "").trim() === selectedCostCenter)
     .sort((a, b) =>
       String(a.manpower_position || "").localeCompare(
         String(b.manpower_position || "")
       )
     );
-}, [search, storeSummary, filteredRows]);
+}, [search, selectedStoreCode, storeSummary, filteredRows]);
 const selectedStoreHours = useMemo(() => {
   if (!selectedStoreDetail.length) return [];
 
@@ -323,16 +352,17 @@ const ceoSummary = useMemo(() => {
     )
     .reduce((sum, r) => sum + Number(r.total_paid_hours || 0), 0);
 
-  return {
-    criticalStores: 0,
-    warningStores: 0,
-    totalHours,
-    totalOt,
-    flexibleHours,
-    flexiblePercent: totalHours > 0 ? (flexibleHours / totalHours) * 100 : 0,
-    otPercent: totalHours > 0 ? (totalOt / totalHours) * 100 : 0,
-  };
-}, [hourRows, storeSummary]);
+
+return {
+  criticalStores: filteredCeoAlerts.filter((r) => r.alert_level === "Critical").length,
+  warningStores: filteredCeoAlerts.filter((r) => r.alert_level === "Warning").length,
+  totalHours,
+  totalOt,
+  flexibleHours,
+  flexiblePercent: totalHours > 0 ? (flexibleHours / totalHours) * 100 : 0,
+  otPercent: totalHours > 0 ? (totalOt / totalHours) * 100 : 0,
+};
+}, [hourRows, storeSummary, filteredCeoAlerts]);
 
 const topLaborRiskStores = useMemo(() => {
   return filteredCeoAlerts
@@ -391,32 +421,74 @@ const isStoreMode = selectedStoreDetail.length > 0;
         <KpiCard icon={<TrendingUp />} label="Over Stores" value={fmt(kpi.overStores)} />
       </section>
 
-      <section className="filters">
-        <div className="search-box">
-          <Search size={18} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search store, cost center, position..."
-          />
+     <section className="filters">
+  <div className="search-area">
+    <div className="search-box">
+      <Search size={18} />
+      <input
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setSelectedStoreCode("");
+        }}
+        placeholder="Search store, cost center, position..."
+      />
+    </div>
+
+    {storeSuggestions.length > 1 && !selectedStoreCode && (
+      <div className="store-suggestion-box">
+        <div className="suggestion-title">
+          พบ {storeSuggestions.length} สาขา เลือกสาขาที่ต้องการ
         </div>
 
-        <Select
-          value={brand}
-          onChange={setBrand}
-          options={["All", ...filterOptions.brands]}
-        />
-        <Select
-          value={region}
-          onChange={setRegion}
-          options={["All", ...filterOptions.regions]}
-        />
-        <Select
-          value={storeModel}
-          onChange={setStoreModel}
-          options={["All", ...filterOptions.models]}
-        />
-      </section>
+        {storeSuggestions.map((s) => (
+          <button
+            type="button"
+            className="store-suggestion-item"
+            key={s.cost_center_code}
+            onClick={() => {
+              setSelectedStoreCode(String(s.cost_center_code || "").trim());
+              setSearch(s.store_name_th || s.cost_center_code || "");
+            }}
+          >
+            <span>
+              <b>{s.store_name_th}</b>
+              <small>
+                {s.cost_center_code} · {s.brand} · {s.region} · {s.store_model}
+              </small>
+            </span>
+
+            <span
+              className={
+                s.gap < 0 ? "negative" : s.gap > 0 ? "positive" : ""
+              }
+            >
+              Gap {fmt(s.gap)}
+            </span>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <Select
+    value={brand}
+    onChange={setBrand}
+    options={["All", ...filterOptions.brands]}
+  />
+
+  <Select
+    value={region}
+    onChange={setRegion}
+    options={["All", ...filterOptions.regions]}
+  />
+
+  <Select
+    value={storeModel}
+    onChange={setStoreModel}
+    options={["All", ...filterOptions.models]}
+  />
+</section>
 
       {!isStoreMode && (
         <>
@@ -992,7 +1064,7 @@ function StoreExecutiveAnalysis({ detailRows, hourRows }) {
   );
 
   const ftHours = hourRows
-    .filter((r) => r.manpower_group === "FT")
+    .filter((r) => String(r.manpower_group || "").trim() === "FT")
     .reduce((sum, r) => sum + Number(r.total_paid_hours || 0), 0);
 
   const ptHours = hourRows
@@ -1066,7 +1138,7 @@ const planVsActualByGroup = ["FT", "PT", "DVT", "EDC"].map((group) => {
   );
 
   const actualHours = hourRows
-    .filter((h) => String(h.manpower_group || "") === group)
+    .filter((h) => String(h.manpower_group || "").trim() === group)
     .reduce((sum, h) => sum + Number(h.total_paid_hours || 0), 0);
 
   return {
