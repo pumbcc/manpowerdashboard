@@ -395,8 +395,7 @@ const isStoreMode = selectedStoreDetail.length > 0;
           <div className="eyebrow">StoreFlow</div>
           <h1>CPO Manpower Dashboard</h1>
           <p>
-            Plan vs Existing, shortage ranking, over-plan ranking, and position
-            gap.
+            Analytic Website for BU Manpower Planning
           </p>
         </div>
 
