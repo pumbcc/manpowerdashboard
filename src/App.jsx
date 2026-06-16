@@ -471,23 +471,23 @@ const isStoreMode = selectedStoreDetail.length > 0;
     )}
   </div>
 
-  <Select
-    value={brand}
-    onChange={setBrand}
-    options={["All", ...filterOptions.brands]}
-  />
+<Select
+  value={brand}
+  onChange={setBrand}
+  options={[{ value: "All", label: "Brand" }, ...filterOptions.brands]}
+/>
 
-  <Select
-    value={region}
-    onChange={setRegion}
-    options={["All", ...filterOptions.regions]}
-  />
+<Select
+  value={region}
+  onChange={setRegion}
+  options={[{ value: "All", label: "Region" }, ...filterOptions.regions]}
+/>
 
-  <Select
-    value={storeModel}
-    onChange={setStoreModel}
-    options={["All", ...filterOptions.models]}
-  />
+<Select
+  value={storeModel}
+  onChange={setStoreModel}
+  options={[{ value: "All", label: "Store Model" }, ...filterOptions.models]}
+/>
 </section>
 
       {!isStoreMode && (
@@ -595,11 +595,16 @@ function KpiCard({ icon, label, value }) {
 function Select({ value, onChange, options }) {
   return (
     <select value={value} onChange={(e) => onChange(e.target.value)}>
-      {options.map((o) => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
+      {options.map((o) => {
+        const optionValue = typeof o === "string" ? o : o.value;
+        const optionLabel = typeof o === "string" ? o : o.label;
+
+        return (
+          <option key={optionValue} value={optionValue}>
+            {optionLabel}
+          </option>
+        );
+      })}
     </select>
   );
 }
