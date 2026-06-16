@@ -40,7 +40,7 @@ async function loadData() {
     const to = from + pageSize - 1;
 
     const { data, error } = await supabase
-      .from("vw_manpower_gap")
+      .from("summary_manpower_gap")
       .select("*")
       .order("cost_center_code", { ascending: true })
       .range(from, to);
@@ -81,7 +81,18 @@ if (hourError) {
 } else {
   setHourRows(hourData || []);
 }
-setCeoAlerts([]);
+const { data: alertData, error: alertError } = await supabase
+  .from("summary_ceo_manpower_alert")
+  .select("*")
+  .order("alert_level", { ascending: true })
+  .order("total_paid_hours", { ascending: false });
+
+if (alertError) {
+  setError(alertError.message);
+  setCeoAlerts([]);
+} else {
+  setCeoAlerts(alertData || []);
+}
 setRows(allRows);
 setLoading(false);
 }
@@ -880,7 +891,7 @@ function StoreHourAlertTable({ rows }) {
 function CeoAlertTable({ rows }) {
   return (
     <div className="card">
-      <h2>CEO Manpower Alerts</h2>
+      <h2>CPO Manpower Alerts</h2>
       <p className="section-subtitle">
         สาขาที่ควรตรวจสอบจากมุมชั่วโมงทำงาน, OT, flexible workforce และวันหยุด
       </p>
